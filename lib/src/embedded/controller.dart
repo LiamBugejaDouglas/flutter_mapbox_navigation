@@ -56,28 +56,27 @@ class MapBoxNavigationViewController {
   }) async {
     assert(wayPoints.length > 1, 'Error: WayPoints must be at least 2');
     if (Platform.isIOS && wayPoints.length > 3 && options?.mode != null) {
-      assert(
-        options!.mode != MapBoxNavigationMode.drivingWithTraffic,
-        '''
+      assert(options!.mode != MapBoxNavigationMode.drivingWithTraffic, '''
           Error: Cannot use drivingWithTraffic Mode 
           when you have more than 3 Stops
-        ''',
-      );
+        ''');
     }
     final pointList = <Map<String, Object?>>[];
 
     for (var i = 0; i < wayPoints.length; i++) {
-      final wayPoint = wayPoints[i];
-      assert(wayPoint.name != null, 'Error: waypoints need name');
-      assert(wayPoint.latitude != null, 'Error: waypoints need latitude');
-      assert(wayPoint.longitude != null, 'Error: waypoints need longitude');
+      final wp = wayPoints[i];
+
+      // no longer assert name != null
+      assert(wp.latitude != null, 'Error: waypoints need latitude');
+      assert(wp.longitude != null, 'Error: waypoints need longitude');
 
       final pointMap = <String, dynamic>{
         'Order': i,
-        'Name': wayPoint.name,
-        'Latitude': wayPoint.latitude,
-        'Longitude': wayPoint.longitude,
-        'IsSilent': wayPoint.isSilent,
+        // if name is null (silent), fall back to empty string
+        'Name': wp.name ?? '',
+        'Latitude': wp.latitude,
+        'Longitude': wp.longitude,
+        'IsSilent': wp.isSilent,
       };
       pointList.add(pointMap);
     }
@@ -146,9 +145,9 @@ class MapBoxNavigationViewController {
   }
 
   Stream<RouteEvent>? get _streamRouteEvent {
-    return _eventChannel
-        .receiveBroadcastStream()
-        .map((dynamic event) => _parseRouteEvent(event as String));
+    return _eventChannel.receiveBroadcastStream().map(
+      (dynamic event) => _parseRouteEvent(event as String),
+    );
   }
 
   RouteEvent _parseRouteEvent(String jsonString) {
